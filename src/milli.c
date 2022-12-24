@@ -22,7 +22,12 @@ CHAR_PTR C_HL_keywords[] = {
 };
 
 edt_sytx HLDB[] = {
-  { "c", "//", "/*", "*/", C_HL_extensions, C_HL_keywords,
+  { "c",
+      "//",
+      "/*",
+      "*/",
+      C_HL_extensions,
+      C_HL_keywords,
       HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS },
 };
 
@@ -63,7 +68,8 @@ void enableRawMode(void)
 }
 
 // Reads and returns input keypresses from user
-int32_t editorReadKey(void)
+int32_t
+editorReadKey(void)
 {
   int32_t nchar_read = 0;
   char in_key = '\0';
@@ -153,7 +159,8 @@ int32_t editorReadKey(void)
 }
 
 // Gets the current cursor position in the terminal interface
-int32_t getCursorPosition(INT_PTR rows, INT_PTR cols)
+int32_t
+getCursorPosition(INT_PTR rows, INT_PTR cols)
 {
   char buf[32] = { '\0' };
   u_int32_t i = 0;
@@ -186,7 +193,8 @@ int32_t getCursorPosition(INT_PTR rows, INT_PTR cols)
 }
 
 // Gets the terminal window interface's dimensions
-int32_t getTermWinSize(INT_PTR rows, INT_PTR cols)
+int32_t
+getTermWinSize(INT_PTR rows, INT_PTR cols)
 {
   struct winsize ws = { 0, 0, 0, 0 };
 
@@ -210,7 +218,8 @@ int32_t getTermWinSize(INT_PTR rows, INT_PTR cols)
 /***                                SYNTAX HIGHLIGHTING                    ***/
 
 // Checks if a character is a separator
-int8_t is_separator(int32_t ch)
+int8_t
+is_separator(int32_t ch)
 {
   return isspace(ch) || ch == '\0' || strchr("{}'\",.()+-/*=~%%<>[];", ch) != NULL;
 }
@@ -325,8 +334,8 @@ void editorUpdateSyntax(edt_row* row)
         }
 
         if (!strncmp(row->render + i, keywords[j], keywd_len) && is_separator(row->render[i + keywd_len])) {
-          memset(row->highlight + i, keywd_2 ? HL_KEYWORD2 : HL_KEYWORD1,
-              keywd_len);
+          memset(
+              row->highlight + i, keywd_2 ? HL_KEYWORD2 : HL_KEYWORD1, keywd_len);
           i += keywd_len;
           break;
         }
@@ -351,7 +360,8 @@ void editorUpdateSyntax(edt_row* row)
 
 // Maps the editor's possible highlight values to their corresponding ASCII
 // color codes
-int32_t editorSyntaxToColor(int32_t hl_value)
+int32_t
+editorSyntaxToColor(int32_t hl_value)
 {
   switch (hl_value) {
   case HL_NUMBER:
@@ -405,7 +415,8 @@ void editorSelectSyntaxHighlight(void)
 
 /***                                ROW OPERATIONS                         ***/
 
-int32_t editorRowCxToRx(edt_row* row, int32_t cx)
+int32_t
+editorRowCxToRx(edt_row* row, int32_t cx)
 {
   int32_t rx = 0x0;
   int32_t j = 0x0;
@@ -418,7 +429,8 @@ int32_t editorRowCxToRx(edt_row* row, int32_t cx)
   return rx;
 }
 
-int32_t editorRowRxToCx(edt_row* row, int32_t rx)
+int32_t
+editorRowRxToCx(edt_row* row, int32_t rx)
 {
   int32_t cur_rx = 0x0;
   int32_t csr_x = 0x0;
@@ -448,7 +460,7 @@ void editorUpdateRow(edt_row* row)
   }
 
   if (row->render) {
-    free(row->render);
+    SAFE_FREE(row->render);
   }
 
   row->render = malloc(row->size + (tabs * (MILLI_TAB_STOP - 1)) + 1);
@@ -481,7 +493,8 @@ void editorInsertRow(int32_t at, CHAR_PTR s, size_t len)
   }
 
   edt_conf.row = realloc(edt_conf.row, sizeof(edt_row) * (edt_conf.num_rows + 1));
-  memmove(edt_conf.row + (at + 1), edt_conf.row + at,
+  memmove(edt_conf.row + (at + 1),
+      edt_conf.row + at,
       sizeof(edt_row) * (edt_conf.num_rows - at));
 
   int32_t j = at + 1;
@@ -514,18 +527,13 @@ void editorFreeRow(edt_row* row)
       edt_row* tmp_row = row + i;
 
       if (tmp_row->chars && tmp_row->render && tmp_row->highlight) {
-        free(tmp_row->render);
-        free(tmp_row->chars);
-        free(tmp_row->highlight);
-
-        tmp_row->render = NULL;
-        tmp_row->chars = NULL;
-        tmp_row->highlight = NULL;
+        SAFE_FREE(tmp_row->render);
+        SAFE_FREE(tmp_row->chars);
+        SAFE_FREE(tmp_row->highlight);
       }
     }
 
-    free(row);
-    row = NULL;
+    SAFE_FREE(row);
   }
 }
 
@@ -540,7 +548,8 @@ void editorDelRow(int32_t at)
   }
 
   editorFreeRow(edt_conf.row + at);
-  memmove(edt_conf.row + at, edt_conf.row + (at + 1),
+  memmove(edt_conf.row + at,
+      edt_conf.row + (at + 1),
       (sizeof(edt_row) * (edt_conf.num_rows - (at + 1))));
   --edt_conf.num_rows;
   ++edt_conf.dirty;
@@ -607,7 +616,8 @@ void editorInsertNewLine(void)
     editorInsertRow(edt_conf.csr_y, "", 0);
   } else {
     edt_row* row = edt_conf.row + edt_conf.csr_y;
-    editorInsertRow(edt_conf.csr_y + 1, row->chars + edt_conf.csr_x,
+    editorInsertRow(edt_conf.csr_y + 1,
+        row->chars + edt_conf.csr_x,
         row->size - edt_conf.csr_x);
 
     row = edt_conf.row + edt_conf.csr_y;
@@ -637,8 +647,8 @@ void editorDelChar(void)
     --edt_conf.csr_x;
   } else {
     edt_conf.csr_x = edt_conf.row[edt_conf.csr_y - 1].size;
-    editorRowAppendStr(edt_conf.row + edt_conf.csr_y - 1, row->chars,
-        row->size);
+    editorRowAppendStr(
+        edt_conf.row + edt_conf.csr_y - 1, row->chars, row->size);
     editorDelRow(edt_conf.csr_y);
     --edt_conf.csr_y;
   }
@@ -646,7 +656,8 @@ void editorDelChar(void)
 
 /***                                FILE I/O                               ***/
 
-CHAR_PTR editorRowsToStr(INT_PTR buf_len)
+CHAR_PTR
+editorRowsToStr(INT_PTR buf_len)
 {
   u_int32_t tot_len = 0;
   u_int32_t j = 0;
@@ -696,7 +707,7 @@ void editorOpen()
     editorInsertRow(edt_conf.num_rows, line, line_len);
   }
 
-  free(line);
+  SAFE_FREE(line);
   fclose(fp);
 
   edt_conf.dirty = 0;
@@ -728,8 +739,7 @@ void editorSave(void)
     if (ftruncate(fd, len) != -1) {
       if (write(fd, buf, len) == len) {
         close(fd);
-        free(buf);
-        buf = NULL;
+        SAFE_FREE(buf);
 
         edt_conf.dirty = 0;
         editorSetStatusMessage("%d bytes were written to DISK.", len);
@@ -740,8 +750,7 @@ void editorSave(void)
     close(fd);
   }
 
-  free(buf);
-  buf = NULL;
+  SAFE_FREE(buf);
   editorSetStatusMessage("Failed to save file. I/O error: %s", strerror(errno));
 }
 
@@ -757,10 +766,10 @@ void editorFindCallback(CHAR_PTR query, int32_t key)
   static int32_t saved_hl_line = 0;
   static CHAR_PTR saved_hl = NULL;
   if (saved_hl) {
-    memcpy(edt_conf.row[saved_hl_line].highlight, saved_hl,
+    memcpy(edt_conf.row[saved_hl_line].highlight,
+        saved_hl,
         edt_conf.row[saved_hl_line].rsize);
-    free(saved_hl);
-    saved_hl = NULL;
+    SAFE_FREE(saved_hl);
   }
 
   if (key == '\r' || key == '\x1b') {
@@ -832,7 +841,7 @@ void editorFind(void)
     edt_conf.row_off = saved_row_off;
   }
 
-  free(query);
+  SAFE_FREE(query);
 }
 
 /***                                APPEND BUFFER                          ***/
@@ -854,15 +863,14 @@ void abAppend(struct abuf* ab, CONST_CHAR_PTR s, size_t len)
 // Frees allocated memory for the output screen buffer
 void abFree(struct abuf* ab)
 {
-  if (ab->buffer) {
-    free(ab->buffer);
-  }
+  SAFE_FREE(ab->buffer);
 }
 
 /***                                INPUT                                  ***/
 
 // Asks user for input in cases like saving files or passing commands
-CHAR_PTR editorPrompt(CHAR_PTR prompt, void (*callback)(CHAR_PTR, int32_t))
+CHAR_PTR
+editorPrompt(CHAR_PTR prompt, void (*callback)(CHAR_PTR, int32_t))
 {
   size_t bufsize = 128;
   CHAR_PTR buf = calloc(bufsize, sizeof(char));
@@ -885,7 +893,7 @@ CHAR_PTR editorPrompt(CHAR_PTR prompt, void (*callback)(CHAR_PTR, int32_t))
         callback(buf, ch);
       }
 
-      free(buf);
+      SAFE_FREE(buf);
       return NULL;
     } else if (ch == '\r') {
       if (buflen != 0) {
@@ -988,8 +996,7 @@ void editorProcessKeypress(void)
     editorFreeRow(edt_conf.row);
 
     if (edt_conf.fname && edt_conf.empty_file) {
-      free(edt_conf.fname);
-      edt_conf.fname = NULL;
+      SAFE_FREE(edt_conf.fname);
     }
 
     CLR_SCRN();
@@ -1107,7 +1114,9 @@ void editorDrawRows(struct abuf* ab)
       // display welcome message only when an empty file is opened
       if (edt_conf.num_rows == 0 && y == edt_conf.term_rows / 3) {
         char welcome[80] = { '\0' };
-        int32_t welcome_len = snprintf(welcome, sizeof(welcome), "Milli editor -- version %s",
+        int32_t welcome_len = snprintf(welcome,
+            sizeof(welcome),
+            "Milli editor -- version %s",
             MILLI_VERSION);
 
         if (welcome_len > edt_conf.term_cols) {
@@ -1204,12 +1213,18 @@ void editorDrawStatusBar(struct abuf* ab)
   // int32_t coverage_percent = ((edt_conf.csr_y + 1) / edt_conf.num_rows) *
   // 100;
 
-  int32_t len = snprintf(status, sizeof(status), "%.20s - %d lines %s",
+  int32_t len = snprintf(status,
+      sizeof(status),
+      "%.20s - %d lines %s",
       edt_conf.fname ? edt_conf.fname : "[ No name ]",
-      edt_conf.num_rows, edt_conf.dirty ? "[ modified ]" : "");
-  int32_t rlen = snprintf(rstatus, sizeof(rstatus), "[ %s | Ln: %d, Col: %d ]",
+      edt_conf.num_rows,
+      edt_conf.dirty ? "[ modified ]" : "");
+  int32_t rlen = snprintf(rstatus,
+      sizeof(rstatus),
+      "[ %s | Ln: %d, Col: %d ]",
       edt_conf.syntax ? edt_conf.syntax->file_type : "text",
-      edt_conf.csr_y + 1, edt_conf.csr_x);
+      edt_conf.csr_y + 1,
+      edt_conf.csr_x);
 
   if (len > edt_conf.term_cols) {
     len = edt_conf.term_cols;
@@ -1264,7 +1279,9 @@ void editorRefreshScreen(void)
 
   // move the cursor
   char buf[32] = { '\0' };
-  snprintf(buf, sizeof(buf), "\x1b[%d;%dH",
+  snprintf(buf,
+      sizeof(buf),
+      "\x1b[%d;%dH",
       1 + (edt_conf.csr_y - edt_conf.row_off),
       1 + (edt_conf.render_x - edt_conf.col_off));
   abAppend(&ab, buf, strlen(buf));
@@ -1306,7 +1323,8 @@ void initEditor(void)
   edt_conf.term_rows -= 2;
 }
 
-int32_t main(int32_t argc, CHAR_PTR argv[])
+int32_t
+main(int32_t argc, CHAR_PTR argv[])
 {
   enableRawMode();
   initEditor();
